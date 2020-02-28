@@ -1,0 +1,21 @@
+{{#d-modal-body}}
+  {{d-button action=(action "print") label="command_palette.print"}}
+  <br>
+  <form {{action "fetchResults" on="submit"}}>
+    {{input value=term}}
+    {{#unless validPrefix}}
+      <p>invalid prefix</p>
+    {{/unless}}
+  </form>
+
+  {{#if searchingUsers}}
+    <table class='table users-list grid'>
+      <tbody>
+        {{#each results as |user| }}
+          {{admin-user user=user}}
+        {{/each}}
+      </tbody>
+    </table>
+  {{/if}}
+{{/d-modal-body}}
+

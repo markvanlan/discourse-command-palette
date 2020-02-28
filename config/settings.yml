@@ -1,0 +1,4 @@
+plugins:
+  command_palette_enabled:
+    default: true
+    client: true
