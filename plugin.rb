@@ -8,6 +8,8 @@
 enabled_site_setting :command_palette_enabled
 hide_plugin if self.respond_to?(:hide_plugin)
 
+register_asset 'stylesheets/common/command-palette.scss'
+
 PLUGIN_NAME ||= -"discourse-command-palette"
 
 after_initialize do

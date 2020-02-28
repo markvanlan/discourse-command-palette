@@ -1,4 +1,4 @@
-{{#d-modal-body}}
+{{#d-modal-body class="command-palette"}}
   {{d-button action=(action "print") label="command_palette.print"}}
   <br>
   <form {{action "fetchResults" on="submit"}}>
@@ -8,14 +8,26 @@
     {{/unless}}
   </form>
 
-  {{#if searchingUsers}}
-    <table class='table users-list grid'>
+  {{#if results}}
+    <table>
       <tbody>
-        {{#each results as |user| }}
-          {{admin-user user=user}}
-        {{/each}}
+
+        {{#if searchingUsers}}
+          {{admin-users-list users=results}}
+        {{/if}}
+
+        {{#if searchingReports}}
+          {{#each results as |report|}}
+            <tr>
+              <td>{{#link-to 'adminReports.show' report.type}}{{report.title}}{{/link-to}}</td>
+              <td>{{report.description}}</td>
+            </tr>
+          {{/each}}
+        {{/if}}
+
       </tbody>
     </table>
   {{/if}}
+
 {{/d-modal-body}}
 
