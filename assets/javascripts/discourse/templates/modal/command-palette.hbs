@@ -1,33 +1,6 @@
 {{#d-modal-body class="command-palette"}}
-  {{d-button action=(action "print") label="command_palette.print"}}
-  <br>
-  <form {{action "fetchResults" on="submit"}}>
-    {{input value=term}}
-    {{#unless validPrefix}}
-      <p>invalid prefix</p>
-    {{/unless}}
-  </form>
-
-  {{#if results}}
-    <table>
-      <tbody>
-
-        {{#if searchingUsers}}
-          {{admin-users-list users=results}}
-        {{/if}}
-
-        {{#if searchingReports}}
-          {{#each results as |report|}}
-            <tr>
-              <td>{{#link-to 'adminReports.show' report.type}}{{report.title}}{{/link-to}}</td>
-              <td>{{report.description}}</td>
-            </tr>
-          {{/each}}
-        {{/if}}
-
-      </tbody>
-    </table>
-  {{/if}}
+  {{command-palette-search transition=(action "transition")}}
+  {{!--  {{d-button action=(action "print") label="command_palette.print"}}  --}}
 
 {{/d-modal-body}}
 

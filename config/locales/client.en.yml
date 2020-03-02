@@ -2,3 +2,4 @@ en:
   js:
     command_palette:
       print: Print
+      title: Command Palette
