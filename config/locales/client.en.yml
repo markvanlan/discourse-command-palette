@@ -3,3 +3,4 @@ en:
     command_palette:
       print: Print
       title: Command Palette
+      no_filter: "Enter filter"

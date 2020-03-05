@@ -1,7 +1,10 @@
 import ComboBoxComponent from "select-kit/components/combo-box";
+import discourseComputed from "discourse-common/utils/decorators";
 import { ajax } from "discourse/lib/ajax";
 import AdminUser from "admin/models/admin-user";
+import { isNone } from "@ember/utils";
 import { filterAdminReports } from "admin/controllers/admin-dashboard-reports";
+import { searchForTerm } from "discourse/lib/search";
 
 export const _navigateToUser = (value, item, transitionTo) => {
   transitionTo(`/admin/users/${item.id}/${item.username}`);
@@ -15,6 +18,10 @@ export const _navigateToSiteSetting = (value, item, transitionTo) => {
   transitionTo("adminSiteSettings", { queryParams: { filter: value } });
 };
 
+export const _navigateToTopic = (value, item, transitionTo) => {
+  transitionTo("topic", item.topic);
+};
+
 export const _fetchUsers = filter => {
   return AdminUser.findAll("active", {
     filter,
@@ -25,38 +32,58 @@ export const _fetchUsers = filter => {
 
 export const _fetchReports = filter => {
   return ajax("/admin/reports").then(results => {
-    return filterAdminReports(results.reports, filter);
+    return results.reports
+      .filter(r => r.title.toLowerCase().includes(filter))
+      .slice(0, 10);
   });
 };
 
 export const _fetchSiteSettings = filter => {
   return ajax("/admin/site_settings/category/all_results").then(results => {
     return results.site_settings
-      .filter(s => s.setting.includes(filter))
+      .filter(s => s.setting.replace(/_/g, " ").includes(filter))
       .slice(0, 10);
+  });
+};
+
+export const _fetchTopics = filter => {
+  if (!filter) return;
+
+  return searchForTerm(filter, { typeFilter: "topic" }).then(results => {
+    return results.posts.slice(0, 10);
   });
 };
 
 export const FILTERABLES = {
   users: {
+    name: "Users",
     prefix: "u",
-    fetchFunction: _fetchUsers,
     row: "user-chooser/user-row",
+    fetchFunction: _fetchUsers,
     onSelect: _navigateToUser
   },
   reports: {
+    name: "Reports",
     prefix: "r",
-    fetchFunction: _fetchReports,
     row: "command-palette/report-row",
     id: "type",
+    fetchFunction: _fetchReports,
     onSelect: _navigateToReport
   },
   siteSettings: {
+    name: "Site Settings",
     prefix: "s",
     id: "setting",
     row: "command-palette/site-setting-row",
     fetchFunction: _fetchSiteSettings,
     onSelect: _navigateToSiteSetting
+  },
+  topics: {
+    name: "Topics",
+    prefix: "t",
+    row: "command-palette/topic-row",
+    fetchFunction: _fetchTopics,
+    onSelect: _navigateToTopic
   }
 };
 
@@ -65,22 +92,42 @@ export default ComboBoxComponent.extend({
   classNames: ["command-palette"],
   filterableType: null,
 
+  @discourseComputed("filterableType")
+  headerText(filterableType) {},
+
   selectKitOptions: {
     filterable: true
   },
 
   search(filter) {
-    if (!filter) return;
+    if (!filter) {
+      this.set("filterableType", null);
+      this.setHeaderText();
+      return;
+    }
 
-    for (const filterableName in FILTERABLES) {
-      let filterable = FILTERABLES[filterableName];
-      if (filter.match(new RegExp(`^${filterable.prefix} (.*?)`))) {
-        this.set("filterableType", filterable);
-        return filterable.fetchFunction(
-          filter.replace(`${filterable.prefix} `, "")
-        );
+    if (filter) {
+      for (const filterableName in FILTERABLES) {
+        let filterable = FILTERABLES[filterableName];
+        if (filter.match(new RegExp(`^${filterable.prefix} (.*?)`))) {
+          this.set("filterableType", filterable);
+          this.setHeaderText();
+          return filterable.fetchFunction(
+            filter.replace(`${filterable.prefix} `, "")
+          );
+        }
       }
     }
+  },
+
+  setHeaderText() {
+    const name = this.getHeader().querySelector("span.name");
+    name.innerHTML = "";
+    let text =
+      this.filterableType && this.filterableType.name
+        ? this.filterableType.name
+        : I18n.t("command_palette.no_filter");
+    name.appendChild(document.createTextNode(text));
   },
 
   select(value, item) {
