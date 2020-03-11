@@ -1,4 +1,5 @@
 import showModal from "discourse/lib/show-modal";
+import { withPluginApi } from "discourse/lib/plugin-api";
 
 export default {
   name: "register-command-palette",
@@ -7,12 +8,10 @@ export default {
     if (!container.lookup("site-settings:main").command_palette_enabled) {
       return;
     }
-    window.addEventListener("keydown", event => {
-      if (event.key === "p" && event.ctrlKey) {
-        event.preventDefault();
-        showModal("command-palette", { title: "command_palette.title" });
-      }
-    });
+    withPluginApi("0.8.39", api => api.addKeyboardShortcut("ctrl + p", (event) => {
+      event.preventDefault();
+      showModal("command-palette", { title: "command_palette.title" });
+    }));
   },
 
   unregister(registration) {}

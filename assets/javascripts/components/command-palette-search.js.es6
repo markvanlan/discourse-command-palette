@@ -103,7 +103,12 @@ export default ComboBoxComponent.extend({
     if (!filter) {
       this.set("filterableType", null);
       this.setHeaderText();
-      return;
+      let leadingOptions = [];
+      for (const filterableName in FILTERABLES) {
+        const filterable = FILTERABLES[filterableName];
+        leadingOptions.push({ id: filterable.prefix, name: filterable.name });
+      }
+      return leadingOptions;
     }
 
     if (filter) {
@@ -131,12 +136,21 @@ export default ComboBoxComponent.extend({
   },
 
   select(value, item) {
+    if (!this.filterableType) {
+      let filter = `${value} `;
+      this.set("mainCollection", []);
+      this.element.querySelector("input").value = filter;
+      this.search(filter);
+      return;
+    }
+
     this._super(...arguments);
     this.filterableType.onSelect(value, item, this.transition);
   },
 
   modifyComponentForRow() {
-    if (this.filterableType.row) return this.filterableType.row;
+    if (this.filterableType && this.filterableType.row)
+      return this.filterableType.row;
     this._super(...arguments);
   },
 
