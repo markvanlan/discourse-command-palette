@@ -94,24 +94,30 @@ export default ComboBoxComponent.extend({
 
   selectKitOptions: {
     filterable: true,
-    filterableType: null
+    filterableType: null,
+    closeOnChange: false
+  },
+
+  defaultList() {
+    return Object.keys(FILTERABLES).map(filterableName => {
+      const filterable = FILTERABLES[filterableName];
+      return { id: filterable.prefix, name: filterable.name };
+    });
   },
 
   search(filter) {
     if (!filter) {
       this.set("selectKit.options.filterableType", null);
       this.setHeaderText();
-
-      return Object.keys(FILTERABLES).map(filterableName => {
-        const filterable = FILTERABLES[filterableName];
-        return { id: filterable.prefix, name: filterable.name };
-      });
+      return this.defaultList();
     }
 
     if (filter) {
       for (const filterableName in FILTERABLES) {
         let filterable = FILTERABLES[filterableName];
-        if (filter.match(new RegExp(`^${filterable.prefix} (.*?)`))) {
+        const match = new RegExp(`^${filterable.prefix} (.*)`).exec(filter);
+
+        if (match && match[1] && match[1].length) {
           this.set("selectKit.options.filterableType", filterable);
           this.setHeaderText();
           return filterable.fetchFunction(
@@ -119,6 +125,9 @@ export default ComboBoxComponent.extend({
           );
         }
       }
+
+      this.set("selectKit.options.filterableType", null);
+      return this.defaultList();
     }
   },
 
@@ -135,17 +144,24 @@ export default ComboBoxComponent.extend({
 
   @action
   onChange(value, item) {
-    if (!this.selectKit.options.filterableType) {
+    if (
+      !this.selectKit.options.filterableType ||
+      this.selectKit.options.filterableType.prefix !== value
+    ) {
+      const filterableType = Object.values(FILTERABLES).findBy("prefix", value);
+      if (filterableType) {
+        this.set("selectKit.options.filterableType", filterableType);
+        this.setHeaderText();
+      }
       this.set("selectKit.filter", `${value} `);
-      this.selectKit.modifySelection(this.defaultItem(null, `${value} `));
-      return;
+      this.search(`${value} `);
+    } else {
+      this.selectKit.options.filterableType.onSelect(
+        value,
+        item,
+        this.transition
+      );
     }
-
-    this.selectKit.options.filterableType.onSelect(
-      value,
-      item,
-      this.transition
-    );
   },
 
   modifyComponentForRow() {
