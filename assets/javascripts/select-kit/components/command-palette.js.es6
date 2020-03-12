@@ -144,10 +144,7 @@ export default ComboBoxComponent.extend({
 
   @action
   onChange(value, item) {
-    if (
-      !this.selectKit.options.filterableType ||
-      this.selectKit.options.filterableType.prefix !== value
-    ) {
+    if (!this.selectKit.options.filterableType) {
       const filterableType = Object.values(FILTERABLES).findBy("prefix", value);
       if (filterableType) {
         this.set("selectKit.options.filterableType", filterableType);
