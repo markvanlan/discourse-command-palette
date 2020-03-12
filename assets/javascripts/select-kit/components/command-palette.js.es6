@@ -3,6 +3,7 @@ import discourseComputed from "discourse-common/utils/decorators";
 import { ajax } from "discourse/lib/ajax";
 import AdminUser from "admin/models/admin-user";
 import { isNone } from "@ember/utils";
+import { computed, action } from "@ember/object";
 import { filterAdminReports } from "admin/controllers/admin-dashboard-reports";
 import { searchForTerm } from "discourse/lib/search";
 
@@ -90,32 +91,28 @@ export const FILTERABLES = {
 export default ComboBoxComponent.extend({
   pluginApiIdentifiers: ["command-palette"],
   classNames: ["command-palette"],
-  filterableType: null,
-
-  @discourseComputed("filterableType")
-  headerText(filterableType) {},
 
   selectKitOptions: {
-    filterable: true
+    filterable: true,
+    filterableType: null
   },
 
   search(filter) {
     if (!filter) {
-      this.set("filterableType", null);
+      this.set("selectKit.options.filterableType", null);
       this.setHeaderText();
-      let leadingOptions = [];
-      for (const filterableName in FILTERABLES) {
+
+      return Object.keys(FILTERABLES).map(filterableName => {
         const filterable = FILTERABLES[filterableName];
-        leadingOptions.push({ id: filterable.prefix, name: filterable.name });
-      }
-      return leadingOptions;
+        return { id: filterable.prefix, name: filterable.name };
+      });
     }
 
     if (filter) {
       for (const filterableName in FILTERABLES) {
         let filterable = FILTERABLES[filterableName];
         if (filter.match(new RegExp(`^${filterable.prefix} (.*?)`))) {
-          this.set("filterableType", filterable);
+          this.set("selectKit.options.filterableType", filterable);
           this.setHeaderText();
           return filterable.fetchFunction(
             filter.replace(`${filterable.prefix} `, "")
@@ -129,37 +126,34 @@ export default ComboBoxComponent.extend({
     const name = this.getHeader().querySelector("span.name");
     name.innerHTML = "";
     let text =
-      this.filterableType && this.filterableType.name
-        ? this.filterableType.name
+      this.selectKit.options.filterableType &&
+      this.selectKit.options.filterableType.name
+        ? this.selectKit.options.filterableType.name
         : I18n.t("command_palette.no_filter");
     name.appendChild(document.createTextNode(text));
   },
 
-  select(value, item) {
-    if (!this.filterableType) {
-      let filter = `${value} `;
-      this.set("mainCollection", []);
-      this.element.querySelector("input").value = filter;
-      this.search(filter);
+  @action
+  onChange(value, item) {
+    if (!this.selectKit.options.filterableType) {
+      this.set("selectKit.filter", `${value} `);
+      this.selectKit.modifySelection(this.defaultItem(null, `${value} `));
       return;
     }
 
-    this._super(...arguments);
-    this.filterableType.onSelect(value, item, this.transition);
+    this.selectKit.options.filterableType.onSelect(
+      value,
+      item,
+      this.transition
+    );
   },
 
   modifyComponentForRow() {
-    if (this.filterableType && this.filterableType.row)
-      return this.filterableType.row;
-    this._super(...arguments);
-  },
-
-  modifyContent(contents) {
-    if (this.filterableType && this.filterableType.id) {
-      contents.map(row => {
-        return Object.assign(row, { id: row[this.filterableType.id] });
-      });
+    if (
+      this.selectKit.options.filterableType &&
+      this.selectKit.options.filterableType.row
+    ) {
+      return this.selectKit.options.filterableType.row;
     }
-    return contents;
   }
 });
