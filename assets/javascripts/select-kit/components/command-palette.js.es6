@@ -62,6 +62,13 @@ export const _fetchTopics = filter => {
 };
 
 export const FILTERABLES = {
+  topics: {
+    name: "Topics",
+    prefix: "t",
+    row: "command-palette/topic-row",
+    fetchFunction: _fetchTopics,
+    onSelect: _navigateToTopic
+  },
   users: {
     name: "Users",
     prefix: "u",
@@ -82,13 +89,6 @@ export const FILTERABLES = {
     id: "setting",
     fetchFunction: _fetchSiteSettings,
     onSelect: _navigateToSiteSetting
-  },
-  topics: {
-    name: "Topics",
-    prefix: "t",
-    row: "command-palette/topic-row",
-    fetchFunction: _fetchTopics,
-    onSelect: _navigateToTopic
   }
 };
 
@@ -105,32 +105,29 @@ export default ComboBoxComponent.extend({
   defaultList() {
     return Object.keys(FILTERABLES).map(filterableName => {
       const filterable = FILTERABLES[filterableName];
-      return { id: filterable.prefix, name: filterable.name };
+      return {
+        id: filterable.prefix,
+        name: filterable.name
+      };
     });
   },
 
   search(filter) {
-    if (!filter) {
+    if (filter) {
+      const filterableType = Object.values(FILTERABLES).find(f => {
+        return new RegExp(`^${f.prefix} (.*)`).exec(filter);
+      });
+
+      if (filterableType) {
+        this.set("selectKit.options.filterableType", filterableType);
+        this.setHeaderText();
+        return filterableType.fetchFunction(
+          filter.replace(`${filterableType.prefix} `, "")
+        );
+      }
+    } else {
       this.set("selectKit.options.filterableType", null);
       this.setHeaderText();
-      return this.defaultList();
-    }
-
-    if (filter) {
-      for (const filterableName in FILTERABLES) {
-        let filterable = FILTERABLES[filterableName];
-        const match = new RegExp(`^${filterable.prefix} (.*)`).exec(filter);
-
-        if (match && match[1] && match[1].length) {
-          this.set("selectKit.options.filterableType", filterable);
-          this.setHeaderText();
-          return filterable.fetchFunction(
-            filter.replace(`${filterable.prefix} `, "")
-          );
-        }
-      }
-
-      this.set("selectKit.options.filterableType", null);
       return this.defaultList();
     }
   },
@@ -155,7 +152,7 @@ export default ComboBoxComponent.extend({
         this.setHeaderText();
       }
       this.set("selectKit.filter", `${value} `);
-      this.search(`${value} `);
+      this.triggerSearch(`${value} `);
     } else {
       this.selectKit.options.filterableType.onSelect(
         value,
@@ -166,11 +163,9 @@ export default ComboBoxComponent.extend({
   },
 
   modifyComponentForRow() {
-    if (
-      this.selectKit.options.filterableType &&
-      this.selectKit.options.filterableType.row
-    ) {
-      return this.selectKit.options.filterableType.row;
-    }
+    return (
+      this.selectKit.options.get("filterableType.row") ||
+      this._super(...arguments)
+    );
   }
 });

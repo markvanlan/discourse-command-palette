@@ -9,8 +9,11 @@ export default {
       return;
     }
     withPluginApi("0.8.39", api => api.addKeyboardShortcut("ctrl + p", (event) => {
-      event.preventDefault();
-      showModal("command-palette", { title: "command_palette.title" });
+      const user = container.lookup("current-user:main");
+      if (user && user.admin) {
+        event.preventDefault();
+        showModal("command-palette", { title: "command_palette.title" });
+      }
     }));
   },
 
