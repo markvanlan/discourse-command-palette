@@ -1,6 +1,14 @@
 import showModal from "discourse/lib/show-modal";
 import { withPluginApi } from "discourse/lib/plugin-api";
 
+function showCommandPaletteModal(event, container) {
+  const user = container.lookup("current-user:main");
+  if (user && user.admin) {
+    event.preventDefault();
+    showModal("command-palette", { title: "command_palette.title" });
+  }
+}
+
 export default {
   name: "register-command-palette",
 
@@ -9,15 +17,14 @@ export default {
       return;
     }
 
-    withPluginApi("0.8.39", api =>
-      api.addKeyboardShortcut("mod+j", event => {
-        const user = container.lookup("current-user:main");
-        if (user && user.admin) {
-          event.preventDefault();
-          showModal("command-palette", { title: "command_palette.title" });
-        }
-      })
-    );
+    withPluginApi("0.8.39", api => {
+      api.addKeyboardShortcut("ctrl+p", event =>
+        showCommandPaletteModal(event, container)
+      );
+      api.addKeyboardShortcut("command+p", event =>
+        showCommandPaletteModal(event, container)
+      );
+    });
   },
 
   unregister(registration) {}
