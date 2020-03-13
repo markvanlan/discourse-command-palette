@@ -48,7 +48,7 @@ export const _fetchSiteSettings = filter => {
       .filter(s => s.setting.replace(/_/g, " ").includes(filter))
       .slice(0, 10)
       .map(s => {
-        return { id: s.setting, name: s.setting };
+        return { id: s.setting, name: s.setting.replace(/_/g, " ") };
       });
   });
 };
