@@ -35,7 +35,10 @@ export const _fetchReports = filter => {
   return ajax("/admin/reports").then(results => {
     return results.reports
       .filter(r => r.title.toLowerCase().includes(filter))
-      .slice(0, 10);
+      .slice(0, 10)
+      .map(x => {
+        return { id: x.type, name: x.title };
+      });
   });
 };
 
@@ -43,7 +46,10 @@ export const _fetchSiteSettings = filter => {
   return ajax("/admin/site_settings/category/all_results").then(results => {
     return results.site_settings
       .filter(s => s.setting.replace(/_/g, " ").includes(filter))
-      .slice(0, 10);
+      .slice(0, 10)
+      .map(s => {
+        return { id: s.setting, name: s.setting };
+      });
   });
 };
 
@@ -66,7 +72,6 @@ export const FILTERABLES = {
   reports: {
     name: "Reports",
     prefix: "r",
-    row: "command-palette/report-row",
     id: "type",
     fetchFunction: _fetchReports,
     onSelect: _navigateToReport
@@ -75,7 +80,6 @@ export const FILTERABLES = {
     name: "Site Settings",
     prefix: "s",
     id: "setting",
-    row: "command-palette/site-setting-row",
     fetchFunction: _fetchSiteSettings,
     onSelect: _navigateToSiteSetting
   },
