@@ -1,5 +1,5 @@
 .select-kit.command-palette {
-  width: 100%;
+  width: 400px;
   margin-bottom: 1em;
 
   li.select-kit-row.topic-row {
@@ -9,6 +9,11 @@
     .topic-row-title {
       padding: 3px 0;
       font-weight: bold;
+    }
+  }
+  li.select-kit-row.user-row {
+    span {
+      padding-left: 10px;
     }
   }
 }
