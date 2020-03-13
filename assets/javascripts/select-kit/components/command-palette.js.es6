@@ -56,20 +56,19 @@ export const _fetchTopics = filter => {
 };
 
 export const FILTERABLES = {
+  topics: {
+    name: "Topics",
+    prefix: "t",
+    row: "command-palette/topic-row",
+    fetchFunction: _fetchTopics,
+    onSelect: _navigateToTopic
+  },
   users: {
     name: "Users",
     prefix: "u",
     row: "user-chooser/user-row",
     fetchFunction: _fetchUsers,
     onSelect: _navigateToUser
-  },
-  reports: {
-    name: "Reports",
-    prefix: "r",
-    row: "command-palette/report-row",
-    id: "type",
-    fetchFunction: _fetchReports,
-    onSelect: _navigateToReport
   },
   siteSettings: {
     name: "Site Settings",
@@ -79,12 +78,13 @@ export const FILTERABLES = {
     fetchFunction: _fetchSiteSettings,
     onSelect: _navigateToSiteSetting
   },
-  topics: {
-    name: "Topics",
-    prefix: "t",
-    row: "command-palette/topic-row",
-    fetchFunction: _fetchTopics,
-    onSelect: _navigateToTopic
+  reports: {
+    name: "Reports",
+    prefix: "r",
+    row: "command-palette/report-row",
+    id: "type",
+    fetchFunction: _fetchReports,
+    onSelect: _navigateToReport
   }
 };
 
@@ -148,7 +148,7 @@ export default ComboBoxComponent.extend({
         this.setHeaderText();
       }
       this.set("selectKit.filter", `${value} `);
-      this._searchWrapper(`${value} `);
+      this.triggerSearch(`${value} `);
     } else {
       this.selectKit.options.filterableType.onSelect(
         value,
