@@ -10,7 +10,7 @@ export default {
     }
 
     withPluginApi("0.8.39", api =>
-      api.addKeyboardShortcut("mod+p", event => {
+      api.addKeyboardShortcut("mod+j", event => {
         const user = container.lookup("current-user:main");
         if (user && user.admin) {
           event.preventDefault();
