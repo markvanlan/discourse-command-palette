@@ -18,7 +18,7 @@ export default {
     }
 
     withPluginApi("0.8.39", api => {
-      api.addKeyboardShortcut("mod+p", event =>
+      api.addKeyboardShortcut("mod+shift+p", event =>
         showCommandPaletteModal(event, container)
       );
     });
