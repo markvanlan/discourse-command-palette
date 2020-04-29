@@ -6,6 +6,7 @@ import { isNone } from "@ember/utils";
 import { computed, action } from "@ember/object";
 import { filterAdminReports } from "admin/controllers/admin-dashboard-reports";
 import { searchForTerm } from "discourse/lib/search";
+import { setLocalTheme } from "discourse/lib/theme-selector";
 
 export const _navigateToUser = (value, item, transitionTo) => {
   transitionTo(`/admin/users/${item.id}/${item.username}`);
@@ -23,40 +24,60 @@ export const _navigateToTopic = (value, item, transitionTo) => {
   transitionTo("topic", item.topic);
 };
 
-export const _fetchUsers = filter => {
-  return AdminUser.findAll("active", {
-    filter,
-    show_emails: false,
-    page: 1
+export const _navigateToTheme = (value, item, transitionTo) => {
+  Discourse.currentUser.findDetails().then((user) => {
+    const seq = user.get("user_option.theme_key_seq");
+    setLocalTheme([value], seq);
+    window.location.reload();
   });
 };
 
-export const _fetchReports = filter => {
-  return ajax("/admin/reports").then(results => {
+export const _fetchUsers = (filter) => {
+  return AdminUser.findAll("active", {
+    filter,
+    show_emails: false,
+    page: 1,
+  });
+};
+
+export const _fetchReports = (filter) => {
+  return ajax("/admin/reports").then((results) => {
     return results.reports
-      .filter(r => r.title.toLowerCase().includes(filter))
+      .filter((r) => r.title.toLowerCase().includes(filter))
       .slice(0, 10)
-      .map(x => {
+      .map((x) => {
         return { id: x.type, name: x.title };
       });
   });
 };
 
-export const _fetchSiteSettings = filter => {
-  return ajax("/admin/site_settings/category/all_results").then(results => {
+export const _fetchSiteSettings = (filter) => {
+  return ajax("/admin/site_settings/category/all_results").then((results) => {
     return results.site_settings
-      .filter(s => s.setting.replace(/_/g, " ").includes(filter))
+      .filter((s) => s.setting.replace(/_/g, " ").includes(filter))
       .slice(0, 10)
-      .map(s => {
+      .map((s) => {
         return { id: s.setting, name: s.setting.replace(/_/g, " ") };
       });
   });
 };
 
-export const _fetchTopics = filter => {
+export const _fetchThemes = (filter) => {
+  return ajax("/admin/customize/themes").then((results) => {
+    return results.themes
+      .filter((t) => t.component === false)
+      .filter((t) => t.name.includes(filter))
+      .slice(0, 10)
+      .map((x) => {
+        return { id: x.id, name: x.name };
+      });
+  });
+};
+
+export const _fetchTopics = (filter) => {
   if (!filter) return;
 
-  return searchForTerm(filter, { typeFilter: "topic" }).then(results => {
+  return searchForTerm(filter, { typeFilter: "topic" }).then((results) => {
     return results.posts.slice(0, 10);
   });
 };
@@ -67,29 +88,36 @@ export const FILTERABLES = {
     prefix: "t",
     row: "command-palette/topic-row",
     fetchFunction: _fetchTopics,
-    onSelect: _navigateToTopic
+    onSelect: _navigateToTopic,
   },
   users: {
     name: "Users",
     prefix: "u",
     row: "user-chooser/user-row",
     fetchFunction: _fetchUsers,
-    onSelect: _navigateToUser
+    onSelect: _navigateToUser,
   },
   reports: {
     name: "Reports",
     prefix: "r",
     id: "type",
     fetchFunction: _fetchReports,
-    onSelect: _navigateToReport
+    onSelect: _navigateToReport,
   },
   siteSettings: {
     name: "Site Settings",
     prefix: "s",
     id: "setting",
     fetchFunction: _fetchSiteSettings,
-    onSelect: _navigateToSiteSetting
-  }
+    onSelect: _navigateToSiteSetting,
+  },
+  themes: {
+    name: "Change Theme",
+    prefix: "c",
+    id: "theme",
+    fetchFunction: _fetchThemes,
+    onSelect: _navigateToTheme,
+  },
 };
 
 export default ComboBoxComponent.extend({
@@ -99,22 +127,22 @@ export default ComboBoxComponent.extend({
   selectKitOptions: {
     filterable: true,
     filterableType: null,
-    closeOnChange: false
+    closeOnChange: false,
   },
 
   defaultList() {
-    return Object.keys(FILTERABLES).map(filterableName => {
+    return Object.keys(FILTERABLES).map((filterableName) => {
       const filterable = FILTERABLES[filterableName];
       return {
         id: filterable.prefix,
-        name: filterable.name
+        name: filterable.name,
       };
     });
   },
 
   search(filter) {
     if (filter) {
-      const filterableType = Object.values(FILTERABLES).find(f => {
+      const filterableType = Object.values(FILTERABLES).find((f) => {
         return new RegExp(`^${f.prefix} (.*)`).exec(filter);
       });
 
@@ -167,5 +195,5 @@ export default ComboBoxComponent.extend({
       this.selectKit.options.get("filterableType.row") ||
       this._super(...arguments)
     );
-  }
+  },
 });
